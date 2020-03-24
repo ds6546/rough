@@ -55,7 +55,7 @@ public class UDPServerD {
                     setAllFalse();
                     System.out.println("first time");
                     is_first = false;
-                    wait_till.add(Calendar.SECOND, 30);                  
+                    wait_till.add(Calendar.SECOND, 60);                  
                     
                 }
                 

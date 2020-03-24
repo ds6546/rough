@@ -75,9 +75,10 @@ public class UDPClientD
                     InetAddress address = server_address;
                     String message = "Hello from Client";
                     byte[] sendMessage = message.getBytes();
+                    System.out.println("The server address is: " + address.getHostAddress());
                     DatagramPacket sendPacket = new DatagramPacket(sendMessage, sendMessage.length, address, 1234);
                     socket.send(sendPacket);
-                    System.out.println("\nMessage sent from Client");
+                    System.out.println("\nMessage sent to the server: " + address.getHostAddress());
                     
                     // Maximum wait time until figuring out the server is out is 30 seconds
                     Calendar wait_from_server_till = Calendar.getInstance();
