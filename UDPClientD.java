@@ -77,7 +77,7 @@ public class UDPClientD
                     byte[] sendMessage = message.getBytes();
                     DatagramPacket sendPacket = new DatagramPacket(sendMessage, sendMessage.length, address, 1234);
                     socket.send(sendPacket);
-                    System.out.println("Message sent from Client");
+                    System.out.println("\nMessage sent from Client");
                     
                     // Maximum wait time until figuring out the server is out is 30 seconds
                     Calendar wait_from_server_till = Calendar.getInstance();
@@ -92,6 +92,10 @@ public class UDPClientD
                     // out the first client in the arraylist
                     if(receiveUnntilTimeout()==0)
                     {
+                        if(network.size()==0)
+                        {
+                            continue;
+                        }
                         // Return to the driver class to be upgraded to server if I'm the first client in list
                         if(network.get(0).getIP().equals(InetAddress.getLocalHost()))
                         {
@@ -115,7 +119,7 @@ public class UDPClientD
                     ObjectInputStream is = new ObjectInputStream(in);
                     try {
                         Packet pkt = (Packet)is.readObject();
-                        System.out.println("Message received from Server = " + pkt.getMsg());    
+                        System.out.println(pkt.getMsg());    
                         pkt.print_and_remove_nonresponding_Clients();
                         
                         System.out.println("Active clients:-");
@@ -153,10 +157,8 @@ public class UDPClientD
      */
     public int receiveUnntilTimeout()
     {
-        System.out.println("---Waiting for package---");
         try{
             socket.receive(incomingPacket);
-            System.out.println("---package received---");
         }
         catch (SocketTimeoutException e){
            System.out.println("Did not hear back from server for 30 seconds");

@@ -56,7 +56,8 @@ public class UDPServerD {
                     // Server listens for infinite time when the array list is empty
                     socket.setSoTimeout(0);
                     try{
-                        System.out.println("\n--------Server is listening ----------\n");
+                        print_network();
+                        System.out.println("\n++++++++Server is listening +++++++++\n");
                         socket.receive(receivePacket);
                         
                         //Listens to the first client and adds to the arraylist
@@ -71,7 +72,8 @@ public class UDPServerD {
                         network.add(newClient);
                         
                         // Generate a response and pack it into a packet
-                        String response = "Thank you for the message ----- Response sent from server";
+                        String response = "Thank you for the message ----- Response sent from server"
+                                + InetAddress.getLocalHost().getHostName();
                         Packet sendPkt = new Packet(network, response);
                         
                         // Write the packet into an output stream and send it to the first sender
@@ -122,7 +124,8 @@ public class UDPServerD {
                     }            
                     
                     // Create a data packet with network info and response and send it to all active clients
-                    String response = "Thank you for the message ----- Response sent from server";
+                    String response = "Thank you for the message ----- Response sent from server"
+                            + InetAddress.getLocalHost().getHostAddress();
                     Packet sendPkt = new Packet(network, response);    
                     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                     try{
@@ -151,6 +154,10 @@ public class UDPServerD {
         catch(SocketException e)
         {
             e.printStackTrace();
+        } 
+        catch (UnknownHostException ex) 
+        {
+            Logger.getLogger(UDPServerD.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
@@ -230,9 +237,9 @@ public class UDPServerD {
     {
         try
         {
+            print_network();
             System.out.println("\n------------Server is listening -------------\n");
             socket.receive(receivePacket);
-            System.out.println("received");
         }
         catch (SocketTimeoutException e)
         {
@@ -259,5 +266,15 @@ public class UDPServerD {
                 network.remove(i);
             }
         }
+    }
+    
+    public void print_network()
+    {
+        System.out.println("The clients in the array list: ");
+        for (int i = 0; i < network.size(); i++)
+        {
+            System.out.println(network.get(i));
+        }
+        System.out.println("");
     }
 } //end of class
