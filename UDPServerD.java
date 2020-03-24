@@ -109,7 +109,7 @@ public class UDPServerD {
                 else{
                     // Network is not empty
                     // While response has not been received from all the clients
-                    System.out.println("has all been received?: " + is_all_received());
+                    
                     while(!is_all_received())
                     {
                         
@@ -136,8 +136,7 @@ public class UDPServerD {
                     }            
                     
                     // Create a data packet with network info and response and send it to all active clients
-                    String response = "Thank you for the message ----- Response sent from server"
-                            + InetAddress.getLocalHost().getHostAddress();
+                    String response = "Thank you for the message ----- Response sent from server";
                     Packet sendPkt = new Packet(network, response);    
                     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                     try{
@@ -167,10 +166,6 @@ public class UDPServerD {
         {
             e.printStackTrace();
         } 
-        catch (UnknownHostException ex) 
-        {
-            Logger.getLogger(UDPServerD.class.getName()).log(Level.SEVERE, null, ex);
-        }
     }
 
     /**
