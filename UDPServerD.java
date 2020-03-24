@@ -46,9 +46,19 @@ public class UDPServerD {
             
             // Calendar object that has current time
             Calendar wait_till = Calendar.getInstance();
-                        
+            boolean is_first = true;
+            
             while(true)
-            {               
+            {        
+                if((!network.isEmpty())&& (is_first))
+                {
+                    setAllFalse();
+                    System.out.println("first time");
+                    is_first = false;
+                    wait_till.add(Calendar.SECOND, 30);                  
+                    
+                }
+                
                 receivePacket = new DatagramPacket(incomingData, incomingData.length);    
                         
                 if (network.isEmpty())
@@ -99,8 +109,10 @@ public class UDPServerD {
                 else{
                     // Network is not empty
                     // While response has not been received from all the clients
+                    System.out.println("has all been received?: " + is_all_received());
                     while(!is_all_received())
                     {
+                        
                         // The 30 second countdown was on as soon as response was sent
                         long times_out = wait_till.getTimeInMillis() - Calendar.getInstance().getTimeInMillis();
                         socket.setSoTimeout((int)times_out);    // Open the socket only for the remaining time to 30 seconds
