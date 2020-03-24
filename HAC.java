@@ -45,7 +45,6 @@ public class HAC {
         
         else if(input == 'S' || input == 's')
         {
-            System.out.println("I am the server, I am receiving the data");
             UDPServerD theServer = new UDPServerD();
             theServer.executeServer();
         }

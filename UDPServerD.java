@@ -63,10 +63,10 @@ public class UDPServerD {
                         
                 if (network.isEmpty())
                 {   
+                    is_first = false;
                     // Server listens for infinite time when the array list is empty
                     socket.setSoTimeout(0);
                     try{
-                        print_network();
                         System.out.println("\n++++++++Server is listening +++++++++\n");
                         socket.receive(receivePacket);
                         
@@ -93,6 +93,7 @@ public class UDPServerD {
                         byte[] sendData = outputStream.toByteArray();
                         DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, address, port);
                         socket.send(sendPacket); 
+                        System.out.println("Sending data packet to the first client");
                         setAllFalse();  //Reset if response was received
                         
                         // After sending the packet wait for at most 30 seconds
@@ -107,6 +108,7 @@ public class UDPServerD {
                 }  
                 
                 else{
+                    is_first = false;
                     // Network is not empty
                     // While response has not been received from all the clients
                     
@@ -277,7 +279,7 @@ public class UDPServerD {
     
     public void print_network()
     {
-        System.out.println("The clients in the array list: ");
+        System.out.println("The clients recorded by the server: ");
         for (int i = 0; i < network.size(); i++)
         {
             System.out.println(network.get(i));

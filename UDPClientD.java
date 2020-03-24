@@ -93,24 +93,19 @@ public class UDPClientD
                     // out the first client in the arraylist
                     if(receiveUnntilTimeout()==0)
                     {
-                        System.out.println("Print network size: " + network.size());
-                        print_network();
                         if(network.size()==0)
                         {
-                            System.out.println(1);
                             continue;
                         }
                         // Return to the driver class to be upgraded to server if I'm the first client in list
                         if(network.get(0).getIP().equals(InetAddress.getLocalHost()))
                         {
-                            System.out.println(2);
                             // remove myself from the array list because I'm going to become the server
                             System.out.println("\nI am upgrading to Server");
                             remove_myself();
                             return network;
                         }
                         else{
-                            System.out.println(3);
                             // Change server address to the address of the first client in the list
                             setServerAddress(network.get(0).getIP());
                         }
@@ -129,7 +124,7 @@ public class UDPClientD
                         System.out.println(pkt.getMsg());    
                         pkt.print_and_remove_nonresponding_Clients();
                         
-                        System.out.println("Active clients:-");
+                        System.out.println("Active clients in the server's record:-");
                         pkt.printClientArray();
                         
                         // Save the received client array information to this client's own List
