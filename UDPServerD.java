@@ -1,62 +1,65 @@
-import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.SocketException;
-//import java.net.SocketTimeoutException;
+import java.net.*;
 import java.util.Calendar;
 import java.util.List;
-import java.text.DateFormat;  
-import java.text.SimpleDateFormat;  
-import java.util.Date; 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.net.*;
 import java.util.ArrayList;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * This class represents the server instance of the device on which the application
+ * is running.
+ * @author deepson
+ */
 public class UDPServerD {
-	
     private final List<Client> network;
     DatagramSocket socket;
     DatagramPacket receivePacket;
     
+    /**
+     * UDPServer constructor
+     */
     public UDPServerD()
     {
         network = new ArrayList<>();
     }
     
+    /**
+     * UDPServer constructor
+     * @param net network list passed when client upgrades to server
+     */
     public UDPServerD(List<Client> net)
     {
         this.network = net;
     }
-	
+    
+    /**
+     * Executes the server
+     */
     public void executeServer()
     {	
         try{
             socket = new DatagramSocket(1234);
             byte[] incomingData = new byte[1024];  
             
+            // Calendar object that has current time
             Calendar wait_till = Calendar.getInstance();
-            
-            
+                        
             while(true)
-            {
-                
-                
+            {               
                 receivePacket = new DatagramPacket(incomingData, incomingData.length);    
                         
                 if (network.isEmpty())
                 {   
-                    
+                    // Server listens for infinite time when the array list is empty
                     socket.setSoTimeout(0);
                     try{
                         System.out.println("\n--------Server is listening ----------\n");
                         socket.receive(receivePacket);
                         
+                        //Listens to the first client and adds to the arraylist
                         String message = new String(receivePacket.getData());
                         InetAddress address = receivePacket.getAddress();
 			int port = receivePacket.getPort();
@@ -67,56 +70,58 @@ public class UDPServerD {
                         Client newClient = new Client(address, port);
                         network.add(newClient);
                         
+                        // Generate a response and pack it into a packet
                         String response = "Thank you for the message ----- Response sent from server";
                         Packet sendPkt = new Packet(network, response);
                         
+                        // Write the packet into an output stream and send it to the first sender
                         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                         ObjectOutputStream os = new ObjectOutputStream(outputStream);
                         os.writeObject(sendPkt);
                         byte[] sendData = outputStream.toByteArray();
                         DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, address, port);
-                        System.out.println("Sending packet");
-                        socket.send(sendPacket);
-                        System.out.println("Packet sent");  
-                        setAllFalse();
+                        socket.send(sendPacket); 
+                        setAllFalse();  //Reset if response was received
                         
+                        // After sending the packet wait for at most 30 seconds
                         wait_till = Calendar.getInstance();
                         wait_till.add(Calendar.SECOND, 30);   //Maximum wait time until next message
                     }
                     catch(IOException e)
                     {
+                        System.out.println("There has been an exception");
                         e.printStackTrace();
                     }
                 }  
                 
-                //Network is not empty
                 else{
+                    // Network is not empty
+                    // While response has not been received from all the clients
                     while(!is_all_received())
                     {
+                        // The 30 second countdown was on as soon as response was sent
                         long times_out = wait_till.getTimeInMillis() - Calendar.getInstance().getTimeInMillis();
-                        socket.setSoTimeout((int)times_out);
-                        if(receiveUnntilTimeout()==0) 
-                        {
-                            System.out.println("Now towards sending data");
-                            break;
-                            
-                        }
-                            
+                        socket.setSoTimeout((int)times_out);    // Open the socket only for the remaining time to 30 seconds
+                        
+                        // 30 seconds waittime for receiving a data has passed, so go to send data
+                        if(receiveUnntilTimeout()==0) {break;} 
+
+                        // Received message
                         String message = new String(receivePacket.getData());
                         InetAddress address = receivePacket.getAddress();
                         int port = receivePacket.getPort();
-                        System.out.println("Received messagezz: " + message);
+                        System.out.println("Received message: " + message);
                         System.out.println("Client IP: "+ address.getHostAddress());
                         System.out.println("Client port: "+ port);
-                                            
+                            
+                        // If the received client was not in the arraylist, add it
                         if(!isIPpresent(address, port))
                         {
-                            System.out.println("Should not go here");
                             network.add(new Client(address, port));
                         }                       
-                    }
+                    }            
                     
-                    
+                    // Create a data packet with network info and response and send it to all active clients
                     String response = "Thank you for the message ----- Response sent from server";
                     Packet sendPkt = new Packet(network, response);    
                     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -125,17 +130,20 @@ public class UDPServerD {
                         os.writeObject(sendPkt);
                         byte[] sendData = outputStream.toByteArray();
                         sendPackets(sendData);
-                        System.out.println("Packets sent");  
+                        System.out.println("Data packets sent to all the active clients");  
                         remove_non_responding_clients();
                         setAllFalse();
                     }
                     catch(IOException e){
+                        System.out.println("There has been an exception");
                         e.printStackTrace();
                     }      
                     
+                    // After sending the data record time and calculate when to send data again
                     wait_till = Calendar.getInstance();
                     wait_till.add(Calendar.SECOND, 30);   //Maximum wait time until next message
                 }
+                // Cleaning the byte array
                 incomingData = new byte[1024];
             }
         }
@@ -146,9 +154,12 @@ public class UDPServerD {
         }
     }
 
+    /**
+     * Determines if response from all the clients have been received.
+     * @return true or false
+     */
     public boolean is_all_received()
     {
-        System.out.println("is all received entered");
         for(int i = 0; i<network.size(); i++)
         {
             if (!network.get(i).getis_received())
@@ -159,6 +170,12 @@ public class UDPServerD {
         return true;
     }
     
+    /**
+     * Determines if the client is present in our array list
+     * @param address client's IP
+     * @param port client's port
+     * @return if the client is present in the array list
+     */
     public boolean isIPpresent(InetAddress address, int port)
     {
         for(int i = 0; i<network.size(); i++)
@@ -172,13 +189,16 @@ public class UDPServerD {
         return false;
     }
 
+    /**
+     * Sends the packets to all the client's in the array list
+     * @param data the data to be sent: message + network info
+     */
     public void sendPackets(byte[] data)
     {
         for(int i = 0; i < network.size(); i++)
         {
             if(network.get(i).getis_received())
             {
-                System.out.println("packet pathayo");
                 DatagramPacket sendPacket = new DatagramPacket(data, data.length, network.get(i).getIP(), network.get(i).getPort());
                 try{
                 socket.send(sendPacket);
@@ -191,8 +211,9 @@ public class UDPServerD {
         }
     }
     
-
-    
+    /**
+     * Set that response from no one was received after sending data to everyone
+     */
     public void setAllFalse()
     {
         for(int i = 0; i < network.size(); i++)
@@ -201,22 +222,33 @@ public class UDPServerD {
         }
     }
     
+    /**
+     * Continues receiving packet until timeout
+     * @return integer indicating timeout or not
+     */
     public int receiveUnntilTimeout()
     {
-        try{
-            System.out.println("\n--------Server is listening ----------\n");
+        try
+        {
+            System.out.println("\n------------Server is listening -------------\n");
             socket.receive(receivePacket);
             System.out.println("received");
         }
-        catch (SocketTimeoutException e){
+        catch (SocketTimeoutException e)
+        {
            return 0;
-        } catch (IOException ex) {
+        } 
+        catch (IOException ex) 
+        {
             Logger.getLogger(UDPServerD.class.getName()).log(Level.SEVERE, null, ex);
         }
         
         return 1;
     }
 
+    /**
+     * Remove non responding clients
+     */
     public void remove_non_responding_clients()
     {
         for (int i=0; i<network.size(); i++)
@@ -228,4 +260,4 @@ public class UDPServerD {
             }
         }
     }
-}
+} //end of class

@@ -1,4 +1,3 @@
-
 import java.io.ByteArrayInputStream;
 import java.net.UnknownHostException;
 import java.util.Calendar;
@@ -11,15 +10,15 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.util.Random;
 import java.net.*;
-import java.text.DateFormat;  
-import java.text.SimpleDateFormat;  
-import java.util.Date;
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-
+/**
+ * This class represents the client instance of the host on which this application
+ * is running
+ * @author deepson
+ */
 public class UDPClientD
 {
     private List<Client> network;
@@ -27,17 +26,30 @@ public class UDPClientD
     DatagramSocket socket;
     DatagramPacket incomingPacket;
         
+    /**
+     * UDPClient constructor
+     * @param add server IP address passed from the user input
+     */
     public UDPClientD(InetAddress add)
     {
         server_address = add;
         network = new ArrayList<>();
     }
         
+    /**
+     * Set server address
+     * @param add new server's address
+     */
     public void setServerAddress(InetAddress add)
     {
         server_address = add;
     }
     
+    /**
+     * Executes client
+     * @return list of clients in this client's array list that is useful when 
+     *      upgrading to server in the driver class
+     */
     public List<Client> executeClient() 
     {
         Random rand = new Random();
@@ -45,9 +57,11 @@ public class UDPClientD
         boolean hasConnectionEstablished = false;
         while(true)
         {
+            // Send the first message as soon as possible i.e 0 seconds
             int random_int = 0;
             if (hasConnectionEstablished == true)
             {
+                // Send the later messages randomly in 0-30 seconds
                 random_int = rand.nextInt(30000);
             }
             
@@ -56,14 +70,16 @@ public class UDPClientD
                 Thread.sleep(random_int);
                 
                 try{
-                socket = new DatagramSocket(); ////
+                    // Send hello message from the client to the server
+                    socket = new DatagramSocket(); 
                     InetAddress address = server_address;
                     String message = "Hello from Client";
                     byte[] sendMessage = message.getBytes();
                     DatagramPacket sendPacket = new DatagramPacket(sendMessage, sendMessage.length, address, 1234);
                     socket.send(sendPacket);
-                    System.out.println("Message sent");
+                    System.out.println("Message sent from Client");
                     
+                    // Maximum wait time until figuring out the server is out is 30 seconds
                     Calendar wait_from_server_till = Calendar.getInstance();
                     wait_from_server_till.add(Calendar.SECOND,30);
                     
@@ -71,88 +87,88 @@ public class UDPClientD
                     incomingPacket = new DatagramPacket(incomingData, incomingData.length);
                     
                     socket.setSoTimeout(30000);
+                    
+                    // If timeout of 30 seconds occured while waiting for server response,find
+                    // out the first client in the arraylist
                     if(receiveUnntilTimeout()==0)
                     {
-                        System.out.println("after the socket function, about to become the server");
-                        System.out.println("printing network before going to HAC:");
+                        // Return to the driver class to be upgraded to server if I'm the first client in list
                         if(network.get(0).getIP().equals(InetAddress.getLocalHost()))
                         {
+                            // remove myself from the array list because I'm going to become the server
+                            remove_myself();
                             return network;
                         }
-                        else{setServerAddress(network.get(0).getIP());}
-                           
-                        continue;
-                                        
+                        else{
+                            // Change server address to the address of the first client in the list
+                            setServerAddress(network.get(0).getIP());
+                        }
+    
+                        continue;                                      
                     }
                     
+                    // 30 second timeout didn't occur and receiver came back with data from the
+                    // server
                     hasConnectionEstablished = true;
                     byte[] data = incomingPacket.getData();
                     ByteArrayInputStream in = new ByteArrayInputStream(data);
                     ObjectInputStream is = new ObjectInputStream(in);
                     try {
                         Packet pkt = (Packet)is.readObject();
-                        System.out.println("Message received from Server = " + pkt.getMsg());
+                        System.out.println("Message received from Server = " + pkt.getMsg());    
+                        pkt.print_and_remove_nonresponding_Clients();
                         
-                        if(pkt.getMsg().equals("I am your new server!")) {
-                            setServerAddress(incomingPacket.getAddress());
-                            System.out.println("Server changed! The new server is: " + incomingPacket.getAddress().getHostAddress());
-                            hasConnectionEstablished = false;
-                            continue;
-                        }
-                        
-                        pkt.remove_nonresponding_Clients();
-                        System.out.println("Active clients: -----");
+                        System.out.println("Active clients:-");
                         pkt.printClientArray();
-                        network = pkt.getClientArray();
                         
-                    } catch (ClassNotFoundException e) {
+                        // Save the received client array information to this client's own List
+                        network = pkt.getClientArray();  
+                    } 
+                    catch (ClassNotFoundException e) 
+                    {
+                        System.out.println("Problem finding the packet class");
                         e.printStackTrace();
                     }
                 }
                 catch(SocketException z)
                 {
+                    System.out.println("Problem with socket");
                     z.printStackTrace();
                 }   
                 catch(IOException i)
                 {
                     i.printStackTrace();
-                }
-                
+                }     
             }
             catch(InterruptedException e)
             {
                 e.printStackTrace();
             }
         }
-    }
+    } //end of execute Client method
     
+    /**
+     * Continues receiving packet until timeout
+     * @return integer indicating timeout or not
+     */
     public int receiveUnntilTimeout()
     {
-        System.out.println("waiting");
+        System.out.println("---Waiting for package---");
         try{
             socket.receive(incomingPacket);
-            System.out.println("received");
+            System.out.println("---package received---");
         }
         catch (SocketTimeoutException e){
-           socket.close();
-           remove_myself();
-           System.out.println("I am the server now");
-           System.out.println("Printing arraylist before remove myself:");
-           
+           System.out.println("Did not hear back from server for 30 seconds");
            return 0;
         } catch (IOException ex) {
             Logger.getLogger(UDPServerD.class.getName()).log(Level.SEVERE, null, ex);
         }   
-        return 1;
+        return 1; //Still not finished 30 second cycle
     }
     
     public void remove_myself()
     {
-        System.out.println("aaaaaaaaa");
-         for (int i=0; i<network.size(); i++)
-        {
-            network.get(i).printIP();
-        }
         int i = 0;
         boolean has_found = false;
         while((!has_found) && (i < network.size()))
@@ -163,15 +179,12 @@ public class UDPClientD
                     has_found = true;
                     network.remove(i);    
                 }
-            } catch (UnknownHostException ex) {
+            } 
+            catch (UnknownHostException ex) 
+            {
                 Logger.getLogger(UDPClientD.class.getName()).log(Level.SEVERE, null, ex);
             }
             i++;
-        }
-        System.out.println("hahaha you see it?");
-         for (int k=0; k<network.size(); k++)
-        {
-            network.get(k).printIP();
         }
     }
     
