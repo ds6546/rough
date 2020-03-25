@@ -53,7 +53,6 @@ public class UDPServerD {
                 if((!network.isEmpty())&& (is_first))
                 {
                     setAllFalse();
-                    System.out.println("first time");
                     is_first = false;
                     wait_till.add(Calendar.SECOND, 60);                  
                     
@@ -67,7 +66,7 @@ public class UDPServerD {
                     // Server listens for infinite time when the array list is empty
                     socket.setSoTimeout(0);
                     try{
-                        System.out.println("\n++++++++Server is listening +++++++++\n");
+                        System.out.println("\n++++++++  Server is listening  +++++++++\n");
                         socket.receive(receivePacket);
                         
                         //Listens to the first client and adds to the arraylist
@@ -279,7 +278,7 @@ public class UDPServerD {
     
     public void print_network()
     {
-        System.out.println("The clients recorded by the server: ");
+        System.out.println("Messages received from following clients: ");
         for (int i = 0; i < network.size(); i++)
         {
             System.out.println(network.get(i));

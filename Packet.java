@@ -59,7 +59,7 @@ public class Packet implements Serializable{
         {
             if(!network.get(i).is_received)
             {
-                System.out.println("Client: " + network.get(i) + " is down");
+                System.out.println("Client:  " + network.get(i) + "  is down");
                 network.remove(i);
             }
         }
